@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encurtador de URL</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .short-url {
+            font-weight: bold;
+            color: #2c3e50;
+            word-break: break-all;
+        }
+        .short-url a {
+            color: #2c3e50;      /* Mesma cor do texto normal */
+            text-decoration: none; /* Remove o sublinhado */
+            font-weight: bold;
+            transition: color 0.2s;
+        }
+        .short-url a:hover {
+            color: #3498db;       /* Cor ao passar o mouse, opcional */
+            text-decoration: underline;
+        }
+        .copy-btn {
+            background-color: #2ecc71;
+            margin-top: 10px;
+            width: auto;
+        }
+        .copy-btn:hover {
+            background-color: #27ae60;
+        }
+        .url-history {
+            margin-top: 40px;
+        }
+        .url-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        .url-item:last-child {
+            border-bottom: none;
+        }
+        .url-original {
+            color: #666;
+            font-size: 0.9em;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Encurtador de URL</h1>
+        
+        <div class="form-group">
+            <label for="originalUrl">URL Original:</label>
+            <input type="text" id="originalUrl" placeholder="https://www.example.com/very/long/url">
+        </div>
+        
+        <button id="shortenBtn">Encurtar URL</button>
+        
+        <div id="result"></div>
+
+        <div class="url-history">
+            <h2>Histórico de URLs</h2>
+            <div id="urlList"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadUrlHistory();
+        });
+
+        document.getElementById('shortenBtn').addEventListener('click', async () => {
+        const originalUrl = document.getElementById('originalUrl').value.trim();
+        const resultDiv = document.getElementById('result');
+    
+        // Limpar resultados anteriores
+        resultDiv.style.display = 'none';
+        resultDiv.className = '';
+    
+        // Validar URL
+        if (!originalUrl) {
+            showError('Por favor, insira uma URL');
+            return;
+        }
+
+        try {
+            // Chamar a API com JSON
+            const response = await fetch('/api/shorten/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            body: JSON.stringify({ originalUrl }),
+        });
+//     
+        
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Erro ao encurtar URL');
+        }
+
+        const data = await response.json();
+        const shortUrl = data.shortUrl;
+        
+        // Mostrar resultado
+        //const fullShortUrl = `${window.location.origin}/api/${shortUrl}`;
+        showSuccess(`
+            URL encurtada com sucesso!<br><br>
+            <a class="short-url" href="${shortUrl}" target="_blank">${shortUrl}</a><br>
+            <button class="copy-btn" onclick="copyToClipboard('${shortUrl}')">Copiar URL</button>
+        `);
+        
+        // Atualizar o histórico
+        await loadUrlHistory();
+        
+        } catch (error) {
+            showError(error.message);
+        }
+        });
+        
+        async function loadUrlHistory() {
+            try {
+                const response = await fetch('/api/list');
+                const urls = await response.json();
+                
+                const urlList = document.getElementById('urlList');
+                urlList.innerHTML = '';
+                
+                if (urls.length === 0) {
+                    urlList.innerHTML = '<p>Nenhuma URL encurtada ainda.</p>';
+                    return;
+                }
+                
+                urls.forEach(url => {
+                    const urlElement = document.createElement('div');
+                    urlElement.className = 'url-item';
+                    urlElement.innerHTML = `
+                        <div>
+                            <strong class="short-url"><a href="${url.shortUrl}" target="_blank">${url.shortUrl}</a></strong>
+                            <div class="url-original">Original: ${url.originalUrl}</div>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('${url.shortUrl}')">Copiar</button>
+                    `;
+                    urlList.appendChild(urlElement);
+                });
+                
+            } catch (error) {
+                console.error('Erro ao carregar histórico:', error);
+            }
+        }
+        
+        function showSuccess(message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = message;
+            resultDiv.classList.add('success');
+            resultDiv.style.display = 'block';
+        }
+        
+        function showError(message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = message;
+            resultDiv.classList.add('error');
+            resultDiv.style.display = 'block';
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('URL copiada para a área de transferência!');
+            }).catch(err => {
+                console.error('Erro ao copiar:', err);
+            });
+        }
+    </script>
+</body>
+</html>
