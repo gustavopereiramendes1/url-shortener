@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, status, Request
 from fastapi.responses import RedirectResponse, FileResponse
 from models import UrlRequest
-from config.database import collection_name
+from config.database import collection_name, client
 import shortuuid
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
@@ -16,9 +16,7 @@ def read_index():
     return FileResponse("static/index.html")
 
 # Configuração do MongoDB
-MONGO_URI = "mongodb+srv://jungle000ww:000gustavo@cluster0.4gxzomt.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-client = MongoClient(MONGO_URI, server_api=ServerApi('1'))
-db = client["Mongo-shortURL"]
+
 
 try:
     client.admin.command('ping')
