@@ -53,11 +53,17 @@ Acesse [http://localhost:8000](http://localhost:8000) e:
 
 Instale as dependências:
 ```bash
-pip install fastapi uvicorn pymongo shortuuid
+pip install -r requirements.txt
 ```
 
-Configure o MongoDB:
-- Edite `main.py` com sua string de conexão do MongoDB Atlas
+Configure o Atlas MongoDB:
+- Crie um arquivo chamado .env na raiz do projeto.
+- Adicione a seguinte variável ao arquivo:
+MONGO_URI= "<link do banco de dados no atlas>"
+exemplo:
+```bash
+MONGO_URI="mongodb+srv://<usuario>:<senha>@<cluster>.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+````
 
 Execute o servidor:
 ```bash
