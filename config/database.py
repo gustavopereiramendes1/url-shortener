@@ -1,8 +1,12 @@
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
+from dotenv import load_dotenv
+import os
 
 
-MONGO_URI = "mongodb+srv://jungle000ww:000gustavo@cluster0.4gxzomt.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+load_dotenv()
+
+MONGO_URI = os.getenv("MONGO_URI")
 client = MongoClient(MONGO_URI, server_api=ServerApi('1'))
 db = client["Mongo-shortURL"]
 
